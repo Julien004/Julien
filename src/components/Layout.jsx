@@ -1,10 +1,11 @@
-import { NavLink, Outlet } from 'react-router-dom'
-import { LayoutDashboard, UtensilsCrossed, ClipboardList, Dumbbell, Menu, X } from 'lucide-react'
+import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { Home as HomeIcon, LayoutDashboard, UtensilsCrossed, ClipboardList, Dumbbell, Menu, X } from 'lucide-react'
 import { useState } from 'react'
 import Logo from './Logo'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/', label: 'Home', icon: HomeIcon, end: true },
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/nutrition', label: 'Nutrition', icon: UtensilsCrossed },
   { to: '/meal-plans', label: 'Meal Plans', icon: ClipboardList },
   { to: '/workouts', label: 'Workouts', icon: Dumbbell },
@@ -41,6 +42,8 @@ function NavItems({ onNavigate }) {
 
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { pathname } = useLocation()
+  const isHome = pathname === '/'
 
   return (
     <div className="relative min-h-dvh overflow-x-hidden bg-background text-foreground">
@@ -91,7 +94,7 @@ export default function Layout() {
             </button>
           </header>
 
-          <main className="flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10">
+          <main className={isHome ? 'flex flex-1 flex-col' : 'flex-1 px-4 py-6 sm:px-6 lg:px-10 lg:py-10'}>
             <Outlet />
           </main>
         </div>

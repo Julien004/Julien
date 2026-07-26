@@ -4,7 +4,6 @@ import { AreaChart, Area, XAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import GlassCard from '../components/GlassCard'
 import StatCard from '../components/StatCard'
 import ProgressRing from '../components/ProgressRing'
-import GreetingHero from '../components/greeting/GreetingHero'
 import StatisticsPanel from '../components/StatisticsPanel'
 import { useTracker, caloriesForDay, dateKey } from '../lib/store'
 import { CALORIE_GOAL, STEPS_GOAL } from '../lib/goals'
@@ -43,7 +42,12 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <GreetingHero />
+      <div>
+        <p className="text-sm text-muted">{format(today, 'EEEE, MMMM d')}</p>
+        <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Dashboard</h1>
+      </div>
+
+      <StatisticsPanel />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
@@ -162,8 +166,6 @@ export default function Dashboard() {
           </GlassCard>
         </Link>
       </div>
-
-      <StatisticsPanel />
     </div>
   )
 }

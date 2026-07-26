@@ -1,6 +1,7 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { TrackerProvider } from './lib/store'
 import Layout from './components/Layout'
+import Home from './pages/Home'
 import Dashboard from './pages/Dashboard'
 import Nutrition from './pages/Nutrition'
 import MealPlans from './pages/MealPlans'
@@ -12,7 +13,8 @@ function App() {
       <HashRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index element={<Dashboard />} />
+            <Route index element={<Home />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="nutrition" element={<Nutrition />} />
             <Route path="meal-plans" element={<MealPlans />} />
             <Route path="workouts" element={<Workouts />} />
