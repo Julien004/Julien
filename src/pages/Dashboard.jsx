@@ -4,11 +4,11 @@ import { AreaChart, Area, XAxis, ResponsiveContainer, Tooltip } from 'recharts'
 import GlassCard from '../components/GlassCard'
 import StatCard from '../components/StatCard'
 import ProgressRing from '../components/ProgressRing'
+import GreetingHero from '../components/greeting/GreetingHero'
+import StatisticsPanel from '../components/StatisticsPanel'
 import { useTracker, caloriesForDay, dateKey } from '../lib/store'
+import { CALORIE_GOAL, STEPS_GOAL } from '../lib/goals'
 import { lastNDays, format } from '../lib/dateUtils'
-
-const CALORIE_GOAL = 2100
-const STEPS_GOAL = 8000
 
 export default function Dashboard() {
   const { getMealsForDate, getWorkoutForDate, workouts } = useTracker()
@@ -43,10 +43,7 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <p className="text-sm text-muted">{format(today, 'EEEE, MMMM d')}</p>
-        <h1 className="mt-1 font-display text-2xl font-bold sm:text-3xl">Welcome back</h1>
-      </div>
+      <GreetingHero />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
@@ -165,6 +162,8 @@ export default function Dashboard() {
           </GlassCard>
         </Link>
       </div>
+
+      <StatisticsPanel />
     </div>
   )
 }
