@@ -44,7 +44,7 @@ export default function MealPlans() {
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="cursor-pointer rounded-lg border border-border bg-white/5 px-3 py-2 text-sm text-foreground focus:border-primary/60 focus:outline-none"
+            className="min-h-12 cursor-pointer rounded-lg border border-border bg-white/5 px-3 text-sm text-foreground focus:border-primary/60 focus:outline-none"
           />
         </label>
       </div>
@@ -85,7 +85,7 @@ export default function MealPlans() {
             <button
               type="button"
               onClick={() => handleApply(plan)}
-              className={`mt-6 cursor-pointer rounded-lg py-2.5 text-sm font-medium transition-all
+              className={`mt-6 min-h-12 cursor-pointer rounded-lg text-sm font-medium transition-all
                 ${confirmedPlanId === plan.id
                   ? 'bg-accent/20 text-accent'
                   : 'bg-primary text-white hover:opacity-90'}`}

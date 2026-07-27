@@ -1,22 +1,36 @@
 import { useMemo, useState } from 'react'
 import { ComposedChart, Area, Line, XAxis, Tooltip, ResponsiveContainer } from 'recharts'
-import { startOfWeek, addDays, subWeeks, startOfMonth, endOfMonth, subMonths, eachDayOfInterval } from 'date-fns'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  startOfWeek,
+  addDays,
+  addWeeks,
+  subWeeks,
+  startOfMonth,
+  endOfMonth,
+  subMonths,
+  eachDayOfInterval,
+} from 'date-fns'
 import GlassCard from './GlassCard'
 import { useTracker, dateKey } from '../lib/store'
 import { STEPS_GOAL } from '../lib/goals'
-import { format, lastNDays } from '../lib/dateUtils'
+import { format } from '../lib/dateUtils'
 
 const GRANULARITIES = ['Days', 'Weeks', 'Months']
 
-function buildDaysData(workouts, now) {
-  return lastNDays(14, now).map((d) => ({
-    key: dateKey(d),
-    label: format(d, 'd'),
-    sublabel: format(d, 'EEE'),
-    fullLabel: format(d, 'MMM d'),
-    steps: workouts[dateKey(d)]?.steps || 0,
-    goal: STEPS_GOAL,
-  }))
+function buildWeekData(workouts, weekOffset) {
+  const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 })
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = addDays(weekStart, i)
+    return {
+      key: dateKey(d),
+      label: format(d, 'd'),
+      sublabel: format(d, 'EEE'),
+      fullLabel: format(d, 'MMM d'),
+      steps: workouts[dateKey(d)]?.steps || 0,
+      goal: STEPS_GOAL,
+    }
+  })
 }
 
 function buildWeeksData(workouts, now) {
@@ -55,16 +69,22 @@ function buildMonthsData(workouts, now) {
 export default function StatisticsPanel() {
   const { workouts } = useTracker()
   const [granularity, setGranularity] = useState('Days')
+  const [weekOffset, setWeekOffset] = useState(0)
   const [focusedKey, setFocusedKey] = useState(null)
   const now = useMemo(() => new Date(), [])
 
   const data = useMemo(() => {
     if (granularity === 'Weeks') return buildWeeksData(workouts, now)
     if (granularity === 'Months') return buildMonthsData(workouts, now)
-    return buildDaysData(workouts, now)
-  }, [granularity, workouts, now])
+    return buildWeekData(workouts, weekOffset)
+  }, [granularity, workouts, now, weekOffset])
 
-  const focused = data.find((d) => d.key === focusedKey) ?? data[data.length - 1]
+  const todayKey = dateKey(now)
+  const focused =
+    data.find((d) => d.key === focusedKey) ?? data.find((d) => d.key === todayKey) ?? data[data.length - 1]
+
+  const weekRangeLabel =
+    granularity === 'Days' ? `${data[0].fullLabel} – ${data[data.length - 1].fullLabel}` : null
 
   return (
     <GlassCard className="p-5 sm:p-6">
@@ -92,13 +112,44 @@ export default function StatisticsPanel() {
         </div>
       </div>
 
+      {granularity === 'Days' && (
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => {
+              setWeekOffset((w) => w - 1)
+              setFocusedKey(null)
+            }}
+            aria-label="Previous week"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <p className="text-sm font-medium text-foreground">
+            {weekOffset === 0 ? 'This week' : weekRangeLabel}
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setWeekOffset((w) => Math.min(0, w + 1))
+              setFocusedKey(null)
+            }}
+            disabled={weekOffset >= 0}
+            aria-label="Next week"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {data.map((d) => (
           <button
             key={d.key}
             type="button"
             onClick={() => setFocusedKey(d.key)}
-            className={`flex shrink-0 cursor-pointer flex-col items-center rounded-xl px-3.5 py-2 text-xs transition-colors duration-150 ${
+            className={`flex min-h-11 shrink-0 cursor-pointer flex-col items-center justify-center rounded-xl px-3.5 py-2 text-xs transition-colors duration-150 ${
               focused.key === d.key ? 'bg-primary text-white' : 'bg-white/5 text-muted hover:bg-white/10'
             }`}
           >

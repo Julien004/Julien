@@ -1,50 +1,14 @@
 import { useMemo, useState } from 'react'
-import { Plus, Trash2, ClipboardList } from 'lucide-react'
+import { Trash2, ClipboardList, Check } from 'lucide-react'
 import GlassCard from '../components/GlassCard'
 import MonthCalendar from '../components/MonthCalendar'
+import Fab from '../components/Fab'
+import BottomSheet from '../components/BottomSheet'
 import { useTracker, caloriesForDay, dateKey } from '../lib/store'
 import { MEAL_SLOTS, MEAL_SLOT_LABELS, MEAL_PLANS } from '../lib/seedData'
 import { format } from '../lib/dateUtils'
 
-function AddFoodForm({ onAdd }) {
-  const [name, setName] = useState('')
-  const [calories, setCalories] = useState('')
-
-  const submit = (e) => {
-    e.preventDefault()
-    if (!name.trim()) return
-    onAdd({ name: name.trim(), calories: Number(calories) || 0 })
-    setName('')
-    setCalories('')
-  }
-
-  return (
-    <form onSubmit={submit} className="mt-3 flex flex-wrap items-center gap-2">
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Food or drink"
-        className="min-w-0 flex-1 rounded-lg border border-border bg-white/5 px-3 py-2 text-sm text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
-      />
-      <input
-        value={calories}
-        onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ''))}
-        placeholder="kcal"
-        inputMode="numeric"
-        className="w-20 rounded-lg border border-border bg-white/5 px-3 py-2 text-sm text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
-      />
-      <button
-        type="submit"
-        className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-lg bg-primary text-white transition-transform hover:scale-105"
-        aria-label="Add food item"
-      >
-        <Plus className="h-4 w-4" />
-      </button>
-    </form>
-  )
-}
-
-function MealSlotCard({ slot, items, onAdd, onRemove }) {
+function MealSlotCard({ slot, items, onRemove }) {
   const total = items.reduce((s, it) => s + (it.calories || 0), 0)
 
   return (
@@ -59,7 +23,7 @@ function MealSlotCard({ slot, items, onAdd, onRemove }) {
           {items.map((item) => (
             <li
               key={item.id}
-              className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm"
+              className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2.5 text-sm"
             >
               <span className="truncate pr-2">{item.name}</span>
               <div className="flex shrink-0 items-center gap-3">
@@ -67,7 +31,7 @@ function MealSlotCard({ slot, items, onAdd, onRemove }) {
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
-                  className="cursor-pointer text-muted-2 transition-colors hover:text-destructive"
+                  className="grid h-8 w-8 cursor-pointer place-items-center text-muted-2 transition-colors hover:text-destructive"
                   aria-label={`Remove ${item.name}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -79,9 +43,74 @@ function MealSlotCard({ slot, items, onAdd, onRemove }) {
       ) : (
         <p className="mt-3 text-xs text-muted-2">Nothing logged yet</p>
       )}
-
-      <AddFoodForm onAdd={(item) => onAdd(slot, item)} />
     </GlassCard>
+  )
+}
+
+function AddFoodSheet({ open, onClose, onAdd, selectedDateLabel }) {
+  const [slot, setSlot] = useState('breakfast')
+  const [name, setName] = useState('')
+  const [calories, setCalories] = useState('')
+  const [justAdded, setJustAdded] = useState(false)
+
+  const submit = (e) => {
+    e.preventDefault()
+    if (!name.trim()) return
+    onAdd(slot, { name: name.trim(), calories: Number(calories) || 0 })
+    setName('')
+    setCalories('')
+    setJustAdded(true)
+    setTimeout(() => setJustAdded(false), 1200)
+  }
+
+  return (
+    <BottomSheet open={open} onClose={onClose} title={`Add food · ${selectedDateLabel}`}>
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {MEAL_SLOTS.map((s) => (
+          <button
+            key={s}
+            type="button"
+            onClick={() => setSlot(s)}
+            className={`min-h-11 shrink-0 cursor-pointer rounded-full px-4 text-sm font-medium transition-colors ${
+              slot === s ? 'bg-primary text-white' : 'bg-white/5 text-muted hover:bg-white/10'
+            }`}
+          >
+            {MEAL_SLOT_LABELS[s]}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={submit} className="mt-4 flex flex-col gap-3 pb-2">
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Food or drink"
+          autoFocus
+          className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
+        />
+        <input
+          value={calories}
+          onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ''))}
+          placeholder="Calories (kcal)"
+          inputMode="numeric"
+          className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
+        />
+        <button
+          type="submit"
+          className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-base font-medium text-white transition-colors ${
+            justAdded ? 'bg-accent' : 'bg-primary hover:opacity-90'
+          }`}
+        >
+          {justAdded ? (
+            <>
+              <Check className="h-4 w-4" /> Added
+            </>
+          ) : (
+            `Add to ${MEAL_SLOT_LABELS[slot]}`
+          )}
+        </button>
+      </form>
+    </BottomSheet>
   )
 }
 
@@ -89,6 +118,7 @@ export default function Nutrition() {
   const [selectedDate, setSelectedDate] = useState(new Date())
   const { meals, addFoodItem, removeFoodItem, applyMealPlan } = useTracker()
   const [planId, setPlanId] = useState('')
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const key = dateKey(selectedDate)
   const dayMeals = meals[key] ?? { breakfast: [], lunch: [], dinner: [], snacks: [] }
@@ -133,7 +163,7 @@ export default function Nutrition() {
             <select
               value={planId}
               onChange={(e) => setPlanId(e.target.value)}
-              className="mt-3 w-full cursor-pointer rounded-lg border border-border bg-white/5 px-3 py-2 text-sm text-foreground focus:border-primary/60 focus:outline-none"
+              className="mt-3 min-h-12 w-full cursor-pointer rounded-lg border border-border bg-white/5 px-3 text-sm text-foreground focus:border-primary/60 focus:outline-none"
             >
               <option value="" className="bg-surface">Choose a plan…</option>
               {MEAL_PLANS.map((p) => (
@@ -146,7 +176,7 @@ export default function Nutrition() {
               type="button"
               onClick={handleApplyPlan}
               disabled={!planId}
-              className="mt-3 w-full cursor-pointer rounded-lg bg-primary py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+              className="mt-3 min-h-12 w-full cursor-pointer rounded-lg bg-primary text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
             >
               Apply to {format(selectedDate, 'MMM d')}
             </button>
@@ -167,13 +197,20 @@ export default function Nutrition() {
                 key={slot}
                 slot={slot}
                 items={dayMeals[slot]}
-                onAdd={(s, item) => addFoodItem(key, s, item)}
                 onRemove={(itemId) => removeFoodItem(key, slot, itemId)}
               />
             ))}
           </div>
         </div>
       </div>
+
+      <Fab onClick={() => setSheetOpen(true)} label="Add food" />
+      <AddFoodSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onAdd={(slot, item) => addFoodItem(key, slot, item)}
+        selectedDateLabel={format(selectedDate, 'MMM d')}
+      />
     </div>
   )
 }

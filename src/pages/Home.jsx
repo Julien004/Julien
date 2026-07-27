@@ -124,7 +124,7 @@ export default function Home() {
   const [now, setNow] = useState(() => new Date())
 
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000)
+    const id = setInterval(() => setNow(new Date()), 15000)
     return () => clearInterval(id)
   }, [])
 
@@ -144,23 +144,25 @@ export default function Home() {
   const completedSessions = sessions.filter((s) => s.completed)
   const pendingSessions = sessions.filter((s) => !s.completed)
 
-  const timeString = format(now, 'h:mm:ss a')
+  const timeString = format(now, 'h:mm a')
   const dateString = format(now, 'EEEE, MMMM d')
 
   return (
     <div className="relative flex min-h-[calc(100dvh-64px)] flex-1 flex-col overflow-hidden lg:min-h-dvh">
       <GreetingScene period={period} />
-      <div className="relative z-10 flex flex-1 flex-col justify-between gap-10 p-6 sm:p-10 lg:p-16">
-        <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-start">
-          <div>
+      <div
+        className="relative z-10 flex flex-1 flex-col justify-between gap-8 p-5 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:p-10 lg:gap-10 lg:p-16 lg:pb-16"
+      >
+        <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
+          <div className="min-w-0">
             <p className="text-sm font-medium text-white/70">{dateString}</p>
-            <h1 className="mt-2 font-display text-5xl font-bold leading-[1.05] text-white sm:text-6xl lg:text-7xl">
+            <h1 className="mt-2 break-words font-display text-4xl font-bold leading-[1.05] text-white sm:text-6xl lg:text-7xl">
               {meta.greeting}
             </h1>
             <p className="mt-4 max-w-md text-base text-white/85 sm:text-lg">{meta.message}</p>
           </div>
           <div className="self-start rounded-2xl bg-black/30 px-5 py-3 text-right backdrop-blur-sm">
-            <p className="font-display text-3xl font-semibold tabular-nums text-white sm:text-4xl">{timeString}</p>
+            <p className="font-display text-2xl font-semibold tabular-nums text-white sm:text-4xl">{timeString}</p>
           </div>
         </div>
 

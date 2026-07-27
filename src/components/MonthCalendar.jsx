@@ -18,7 +18,7 @@ export default function MonthCalendar({ selectedDate, onSelect, markedDates = ne
           <button
             type="button"
             onClick={() => setVisibleMonth((m) => subMonths(m, 1))}
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
             aria-label="Previous month"
           >
             <ChevronLeft className="h-4 w-4" />
@@ -26,7 +26,7 @@ export default function MonthCalendar({ selectedDate, onSelect, markedDates = ne
           <button
             type="button"
             onClick={() => setVisibleMonth((m) => addMonths(m, 1))}
-            className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
+            className="grid h-9 w-9 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:bg-white/5 hover:text-foreground"
             aria-label="Next month"
           >
             <ChevronRight className="h-4 w-4" />
