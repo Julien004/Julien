@@ -4,9 +4,11 @@ import GlassCard from '../components/GlassCard'
 import MonthCalendar from '../components/MonthCalendar'
 import Fab from '../components/Fab'
 import BottomSheet from '../components/BottomSheet'
+import Celebration from '../components/Celebration'
 import { useTracker, caloriesForDay, proteinForDay, dateKey } from '../lib/store'
 import { MEAL_SLOTS, MEAL_SLOT_LABELS, MEAL_PLANS } from '../lib/seedData'
 import { format } from '../lib/dateUtils'
+import { useCelebration } from '../lib/useCelebration'
 
 function MealSlotCard({ slot, items, onRemove }) {
   const total = items.reduce((s, it) => s + (it.calories || 0), 0)
@@ -132,11 +134,18 @@ export default function Nutrition() {
   const { meals, addFoodItem, removeFoodItem, applyMealPlan } = useTracker()
   const [planId, setPlanId] = useState('')
   const [sheetOpen, setSheetOpen] = useState(false)
+  const { message, celebrate } = useCelebration()
 
   const key = dateKey(selectedDate)
   const dayMeals = meals[key] ?? { breakfast: [], lunch: [], dinner: [], snacks: [] }
   const totalCalories = caloriesForDay(dayMeals)
   const totalProtein = proteinForDay(dayMeals)
+
+  const handleAddFood = (slot, item) => {
+    const wasEmpty = dayMeals[slot].length === 0
+    addFoodItem(key, slot, item)
+    if (wasEmpty) celebrate(`${MEAL_SLOT_LABELS[slot]} logged — nutrition updated.`)
+  }
 
   const markedDates = useMemo(() => {
     const set = new Set()
@@ -223,9 +232,10 @@ export default function Nutrition() {
       <AddFoodSheet
         open={sheetOpen}
         onClose={() => setSheetOpen(false)}
-        onAdd={(slot, item) => addFoodItem(key, slot, item)}
+        onAdd={handleAddFood}
         selectedDateLabel={format(selectedDate, 'MMM d')}
       />
+      <Celebration message={message} />
     </div>
   )
 }

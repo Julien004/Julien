@@ -4,9 +4,11 @@ import GlassCard from '../components/GlassCard'
 import MonthCalendar from '../components/MonthCalendar'
 import Fab from '../components/Fab'
 import BottomSheet from '../components/BottomSheet'
+import Celebration from '../components/Celebration'
 import { useTracker, dateKey } from '../lib/store'
 import { EXERCISE_LIBRARY } from '../lib/seedData'
 import { format } from '../lib/dateUtils'
+import { useCelebration } from '../lib/useCelebration'
 
 function minutesBetween(start, end) {
   if (!start || !end) return null
@@ -30,7 +32,7 @@ function SessionRow({ session, onToggle, onUpdate, onRemove }) {
         <div className="flex items-start gap-3">
           <button
             type="button"
-            onClick={() => onToggle(session.id)}
+            onClick={onToggle}
             aria-pressed={session.completed}
             aria-label={session.completed ? 'Mark session incomplete' : 'Mark session complete'}
             className={`grid h-9 w-9 shrink-0 cursor-pointer place-items-center rounded-full border-2 transition-colors ${
@@ -141,9 +143,15 @@ export default function Workouts() {
   const { getWorkoutForDate, workouts, addSession, removeSession, toggleSessionComplete, updateSession, setSteps } =
     useTracker()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const { message, celebrate } = useCelebration()
 
   const key = dateKey(selectedDate)
   const dayWorkout = getWorkoutForDate(key)
+
+  const handleToggleSession = (session) => {
+    toggleSessionComplete(key, session.id)
+    if (!session.completed) celebrate('Workout complete — nice work.')
+  }
 
   const markedDates = useMemo(() => {
     const set = new Set()
@@ -189,7 +197,7 @@ export default function Workouts() {
                 <SessionRow
                   key={session.id}
                   session={session}
-                  onToggle={(id) => toggleSessionComplete(key, id)}
+                  onToggle={() => handleToggleSession(session)}
                   onUpdate={(id, patch) => updateSession(key, id, patch)}
                   onRemove={(id) => removeSession(key, id)}
                 />
@@ -211,6 +219,7 @@ export default function Workouts() {
         onAdd={(exercise) => addSession(key, exercise)}
         selectedDateLabel={format(selectedDate, 'MMM d')}
       />
+      <Celebration message={message} />
     </div>
   )
 }

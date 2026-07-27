@@ -33,6 +33,7 @@ export function buildTimelineForDate({ activities = [], workout, meals }) {
       completed: act.completed,
       points: act.points || 0,
       notes: act.notes || '',
+      templateId: act.templateId || null,
     })
   }
 
@@ -87,7 +88,7 @@ export function getCurrentAndNext(timedItems, now = new Date()) {
     const startMin = toMinutes(item.time)
     const endMin = item.endTime ? toMinutes(item.endTime) : startMin + 45
 
-    if (startMin <= nowMin && nowMin < endMin && !item.completed) {
+    if (!current && startMin <= nowMin && nowMin < endMin && !item.completed) {
       current = item
     }
     if (startMin > nowMin && !next) {

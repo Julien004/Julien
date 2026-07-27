@@ -10,12 +10,15 @@ import StatisticsPanel from '../components/StatisticsPanel'
 import Timeline from '../components/dashboard/Timeline'
 import LifeBalance from '../components/dashboard/LifeBalance'
 import NutritionSummary from '../components/dashboard/NutritionSummary'
-import MoodCheck from '../components/dashboard/MoodCheck'
+import DailyReflection from '../components/dashboard/DailyReflection'
+import Celebration from '../components/Celebration'
 import { useTracker, caloriesForDay, proteinForDay, dateKey } from '../lib/store'
 import { CALORIE_GOAL, STEPS_GOAL } from '../lib/goals'
 import { lastNDays, format } from '../lib/dateUtils'
 import { getDayPeriod, PERIOD_META } from '../lib/timeOfDay'
 import { pickQuote } from '../lib/quotes'
+import { useCelebration } from '../lib/useCelebration'
+import { getTipsFor } from '../lib/activityTemplates'
 import {
   buildTimelineForDate,
   getCurrentAndNext,
@@ -79,9 +82,12 @@ export default function Dashboard() {
     else break
   }
 
+  const { message, celebrate } = useCelebration()
+
   const handleToggleTimelineItem = (item) => {
     if (item.sourceType === 'activity') toggleActivityCompletion(todayKey, item.sourceId)
     else if (item.sourceType === 'workout') toggleSessionComplete(todayKey, item.sourceId)
+    if (!item.completed) celebrate(`${item.name} complete — nice work.`)
   }
 
   const week = lastNDays(7, now)
@@ -95,7 +101,9 @@ export default function Dashboard() {
 
   const water = getWaterForDate(todayKey)
   const sleepHours = getSleepForDate(todayKey)
-  const todayMood = reflections[todayKey]?.mood ?? null
+  const todayReflection = reflections[todayKey] || null
+
+  const currentTips = current ? getTipsFor(current.templateId, current.category) : []
 
   return (
     <div className="flex flex-1 flex-col">
@@ -125,7 +133,18 @@ export default function Dashboard() {
               {current ? 'Happening now' : next ? 'Up next' : "What's next"}
             </p>
             {current ? (
-              <p className="mt-1.5 font-display text-lg font-semibold text-white">{current.name}</p>
+              <>
+                <p className="mt-1.5 font-display text-lg font-semibold text-white">{current.name}</p>
+                {currentTips.length > 0 && (
+                  <ul className="mt-2 flex flex-col gap-1">
+                    {currentTips.slice(0, 2).map((tip) => (
+                      <li key={tip} className="text-xs text-white/70">
+                        · {tip}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
             ) : next ? (
               <div className="mt-1.5 flex items-center justify-between gap-3">
                 <p className="font-display text-lg font-semibold text-white">{next.name}</p>
@@ -220,11 +239,14 @@ export default function Dashboard() {
         </div>
 
         <GlassCard className="p-5 sm:p-6">
-          <h2 className="font-display text-lg font-semibold">How are you feeling?</h2>
+          <h2 className="font-display text-lg font-semibold">Daily Reflection</h2>
           <div className="mt-4">
-            <MoodCheck
-              mood={todayMood}
-              onSelect={(mood) => saveReflection(todayKey, { ...(reflections[todayKey] || {}), mood })}
+            <DailyReflection
+              period={period}
+              reflection={todayReflection}
+              reflections={reflections}
+              onSaveMood={(mood) => saveReflection(todayKey, { ...(reflections[todayKey] || {}), mood })}
+              onSaveReflection={(data) => saveReflection(todayKey, { ...(reflections[todayKey] || {}), ...data })}
             />
           </div>
         </GlassCard>
@@ -349,6 +371,7 @@ export default function Dashboard() {
 
         <StatisticsPanel />
       </div>
+      <Celebration message={message} />
     </div>
   )
 }

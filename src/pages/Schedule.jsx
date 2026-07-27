@@ -11,7 +11,9 @@ import {
 import GlassCard from '../components/GlassCard'
 import Fab from '../components/Fab'
 import BottomSheet from '../components/BottomSheet'
+import Celebration from '../components/Celebration'
 import { useTracker, dateKey } from '../lib/store'
+import { useCelebration } from '../lib/useCelebration'
 import { CATEGORIES, CATEGORY_LIST } from '../lib/categories'
 import { ACTIVITY_TEMPLATES } from '../lib/activityTemplates'
 import { getIcon, ICON_OPTIONS } from '../lib/icons'
@@ -374,6 +376,7 @@ export default function Schedule() {
     useTracker()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
+  const { message, celebrate } = useCelebration()
 
   const todayKey = dateKey(new Date())
   const todayOccurrences = useMemo(() => getActivitiesForDate(todayKey), [activities, todayKey])
@@ -382,6 +385,11 @@ export default function Schedule() {
     for (const occ of todayOccurrences) map[occ.id] = occ.completed
     return map
   }, [todayOccurrences])
+
+  const handleToggleToday = (activity) => {
+    toggleActivityCompletion(todayKey, activity.id)
+    if (!completedMap[activity.id]) celebrate(`${activity.name} complete — nice work.`)
+  }
 
   const sortedActivities = useMemo(
     () => [...activities].sort((a, b) => (a.startTime || '99:99').localeCompare(b.startTime || '99:99')),
@@ -410,7 +418,7 @@ export default function Schedule() {
               key={activity.id}
               activity={activity}
               completedToday={!!completedMap[activity.id]}
-              onToggleToday={() => toggleActivityCompletion(todayKey, activity.id)}
+              onToggleToday={() => handleToggleToday(activity)}
               onEdit={() => {
                 setEditingId(activity.id)
                 setSheetOpen(true)
@@ -448,6 +456,7 @@ export default function Schedule() {
         onSave={handleSave}
         initial={editingActivity}
       />
+      <Celebration message={message} />
     </div>
   )
 }
