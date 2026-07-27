@@ -1,6 +1,7 @@
 import { MEAL_SLOTS, MEAL_SLOT_LABELS } from './seedData'
 import { MEAL_DEFAULT_TIMES, WORKOUT_SESSION_POINTS, MEAL_SLOT_POINTS } from './goals'
 import { CATEGORIES } from './categories'
+import { getCategoryBalance } from './activityCategories'
 
 export function toMinutes(hhmm) {
   if (!hhmm) return null
@@ -27,7 +28,8 @@ export function buildTimelineForDate({ activities = [], workout, meals }) {
       name: act.name,
       icon: act.icon,
       color: act.color,
-      category: act.category,
+      category: getCategoryBalance(act.category),
+      rawCategory: act.category,
       time: act.startTime || null,
       endTime: act.endTime || null,
       completed: act.completed,

@@ -28,11 +28,17 @@ export function TrackerProvider({ children }) {
     const getWorkoutForDate = (key) => workouts[key] ?? emptyDayWorkout()
 
     const getActivitiesForDate = (key) => {
-      const weekday = parseDateKey(key).getDay()
+      const target = parseDateKey(key)
+      const weekday = target.getDay()
       return activities
         .filter((def) => {
           if (def.repeat === 'daily') return true
+          if (def.repeat === 'weekdays') return weekday >= 1 && weekday <= 5
           if (def.repeat === 'weekly') return (def.weeklyDays || []).includes(weekday)
+          if (def.repeat === 'monthly') {
+            if (!def.date) return false
+            return parseDateKey(def.date).getDate() === target.getDate()
+          }
           return def.date === key
         })
         .map((def) => ({ ...def, completed: !!activityCompletions[key]?.[def.id] }))
@@ -153,7 +159,7 @@ export function TrackerProvider({ children }) {
             name: '',
             icon: 'Star',
             color: '#8b5cf6',
-            category: 'lifestyle',
+            category: 'custom',
             priority: 'medium',
             points: 10,
             notes: '',
@@ -188,6 +194,17 @@ export function TrackerProvider({ children }) {
           }
           return next
         })
+      },
+
+      duplicateActivity(id) {
+        const source = activities.find((a) => a.id === id)
+        if (!source) return null
+        const newId = nextId()
+        setActivities((prev) => [
+          ...prev,
+          { ...source, id: newId, name: source.name, createdAt: Date.now() },
+        ])
+        return newId
       },
 
       toggleActivityCompletion(key, activityId) {
