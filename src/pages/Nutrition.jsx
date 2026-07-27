@@ -4,7 +4,7 @@ import GlassCard from '../components/GlassCard'
 import MonthCalendar from '../components/MonthCalendar'
 import Fab from '../components/Fab'
 import BottomSheet from '../components/BottomSheet'
-import { useTracker, caloriesForDay, dateKey } from '../lib/store'
+import { useTracker, caloriesForDay, proteinForDay, dateKey } from '../lib/store'
 import { MEAL_SLOTS, MEAL_SLOT_LABELS, MEAL_PLANS } from '../lib/seedData'
 import { format } from '../lib/dateUtils'
 
@@ -27,7 +27,9 @@ function MealSlotCard({ slot, items, onRemove }) {
             >
               <span className="truncate pr-2">{item.name}</span>
               <div className="flex shrink-0 items-center gap-3">
-                <span className="text-xs text-muted">{item.calories} kcal</span>
+                <span className="text-xs text-muted">
+                  {item.calories} kcal{item.protein ? ` · ${item.protein}g protein` : ''}
+                </span>
                 <button
                   type="button"
                   onClick={() => onRemove(item.id)}
@@ -51,14 +53,16 @@ function AddFoodSheet({ open, onClose, onAdd, selectedDateLabel }) {
   const [slot, setSlot] = useState('breakfast')
   const [name, setName] = useState('')
   const [calories, setCalories] = useState('')
+  const [protein, setProtein] = useState('')
   const [justAdded, setJustAdded] = useState(false)
 
   const submit = (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    onAdd(slot, { name: name.trim(), calories: Number(calories) || 0 })
+    onAdd(slot, { name: name.trim(), calories: Number(calories) || 0, protein: Number(protein) || 0 })
     setName('')
     setCalories('')
+    setProtein('')
     setJustAdded(true)
     setTimeout(() => setJustAdded(false), 1200)
   }
@@ -88,13 +92,22 @@ function AddFoodSheet({ open, onClose, onAdd, selectedDateLabel }) {
           autoFocus
           className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
         />
-        <input
-          value={calories}
-          onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ''))}
-          placeholder="Calories (kcal)"
-          inputMode="numeric"
-          className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
-        />
+        <div className="flex gap-3">
+          <input
+            value={calories}
+            onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ''))}
+            placeholder="Calories (kcal)"
+            inputMode="numeric"
+            className="min-h-12 flex-1 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
+          />
+          <input
+            value={protein}
+            onChange={(e) => setProtein(e.target.value.replace(/[^0-9]/g, ''))}
+            placeholder="Protein (g)"
+            inputMode="numeric"
+            className="min-h-12 flex-1 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
+          />
+        </div>
         <button
           type="submit"
           className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-base font-medium text-white transition-colors ${
@@ -123,6 +136,7 @@ export default function Nutrition() {
   const key = dateKey(selectedDate)
   const dayMeals = meals[key] ?? { breakfast: [], lunch: [], dinner: [], snacks: [] }
   const totalCalories = caloriesForDay(dayMeals)
+  const totalProtein = proteinForDay(dayMeals)
 
   const markedDates = useMemo(() => {
     const set = new Set()
@@ -188,6 +202,7 @@ export default function Nutrition() {
             <div>
               <p className="text-sm text-muted">{format(selectedDate, 'EEEE, MMMM d')}</p>
               <p className="mt-1 font-display text-xl font-semibold">{totalCalories.toLocaleString()} kcal logged</p>
+              <p className="mt-0.5 text-xs text-muted">{totalProtein}g protein</p>
             </div>
           </GlassCard>
 

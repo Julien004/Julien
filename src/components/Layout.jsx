@@ -1,12 +1,12 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom'
-import { Home as HomeIcon, LayoutDashboard, UtensilsCrossed, ClipboardList, Dumbbell, Menu, X } from 'lucide-react'
+import { LayoutDashboard, CalendarClock, UtensilsCrossed, ClipboardList, Dumbbell, Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import Logo from './Logo'
 import BottomNav from './BottomNav'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Home', icon: HomeIcon, end: true },
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/schedule', label: 'My Schedule', icon: CalendarClock },
   { to: '/nutrition', label: 'Nutrition', icon: UtensilsCrossed },
   { to: '/meal-plans', label: 'Meal Plans', icon: ClipboardList },
   { to: '/workouts', label: 'Workouts', icon: Dumbbell },
@@ -44,7 +44,7 @@ function NavItems({ onNavigate }) {
 export default function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const { pathname } = useLocation()
-  const isHome = pathname === '/'
+  const isFullBleed = pathname === '/'
 
   useEffect(() => {
     setMobileOpen(false)
@@ -122,7 +122,7 @@ export default function Layout() {
 
           <main
             className={
-              isHome
+              isFullBleed
                 ? 'flex flex-1 flex-col'
                 : 'flex-1 px-4 pt-6 pb-[calc(6.5rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-10 lg:py-10 lg:pb-10'
             }

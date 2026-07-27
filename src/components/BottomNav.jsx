@@ -1,9 +1,9 @@
 import { NavLink } from 'react-router-dom'
-import { Home as HomeIcon, LayoutDashboard, UtensilsCrossed, ClipboardList, Dumbbell } from 'lucide-react'
+import { LayoutDashboard, CalendarClock, UtensilsCrossed, ClipboardList, Dumbbell } from 'lucide-react'
 
 const TABS = [
-  { to: '/', label: 'Home', icon: HomeIcon, end: true },
-  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/schedule', label: 'Schedule', icon: CalendarClock },
   { to: '/nutrition', label: 'Nutrition', icon: UtensilsCrossed },
   { to: '/meal-plans', label: 'Plans', icon: ClipboardList },
   { to: '/workouts', label: 'Workouts', icon: Dumbbell },
