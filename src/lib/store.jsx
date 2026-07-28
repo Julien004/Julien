@@ -152,27 +152,30 @@ export function TrackerProvider({ children }) {
         const id = nextId()
         const grams = Number(data.servingSize) || 100
         const scale = 100 / grams
-        setCustomFoods((prev) => [
-          ...prev,
-          {
-            id,
-            name: data.name,
-            group: 'Custom',
-            defaultGrams: grams,
-            commonServings: [{ label: `1 serving (${grams}g)`, grams }],
-            custom: true,
-            per100: {
-              calories: Math.round((Number(data.calories) || 0) * scale),
-              protein: round1((Number(data.protein) || 0) * scale),
-              carbs: round1((Number(data.carbs) || 0) * scale),
-              fat: round1((Number(data.fat) || 0) * scale),
-              fiber: round1((Number(data.fiber) || 0) * scale),
-              sugar: round1((Number(data.sugar) || 0) * scale),
-              sodium: Math.round((Number(data.sodium) || 0) * scale),
-            },
+        const food = {
+          id,
+          name: data.name,
+          group: 'Custom',
+          defaultGrams: grams,
+          commonServings: [{ label: `1 serving (${grams}g)`, grams }],
+          custom: true,
+          barcode: data.barcode || null,
+          per100: {
+            calories: Math.round((Number(data.calories) || 0) * scale),
+            protein: round1((Number(data.protein) || 0) * scale),
+            carbs: round1((Number(data.carbs) || 0) * scale),
+            fat: round1((Number(data.fat) || 0) * scale),
+            fiber: round1((Number(data.fiber) || 0) * scale),
+            sugar: round1((Number(data.sugar) || 0) * scale),
+            sodium: Math.round((Number(data.sodium) || 0) * scale),
           },
-        ])
-        return id
+        }
+        setCustomFoods((prev) => [...prev, food])
+        return food
+      },
+
+      findFoodByBarcode(barcode) {
+        return customFoods.find((f) => f.barcode === barcode) || null
       },
 
       removeCustomFood(id) {

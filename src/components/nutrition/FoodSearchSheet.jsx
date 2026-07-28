@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Search, ChevronLeft, Star, Check } from 'lucide-react'
+import { Search, ChevronLeft, Star, Check, Barcode } from 'lucide-react'
 import BottomSheet from '../BottomSheet'
+import BarcodeScannerModal from './BarcodeScannerModal'
 import { searchFoods, scaleFoodMacros } from '../../lib/foodDatabase'
 import { MEAL_SLOTS, MEAL_SLOT_LABELS } from '../../lib/seedData'
 import { useTracker } from '../../lib/store'
@@ -22,6 +23,7 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
   const [selected, setSelected] = useState(null)
   const [grams, setGrams] = useState(100)
   const [justAdded, setJustAdded] = useState(false)
+  const [scannerOpen, setScannerOpen] = useState(false)
 
   const results = useMemo(() => searchFoods(query, customFoods), [query, customFoods])
 
@@ -74,15 +76,25 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
 
       {!selected ? (
         <div className="mt-4 flex flex-col gap-3 pb-2">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-2" />
-            <input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search foods, e.g. Chicken Breast"
-              autoFocus
-              className="min-h-12 w-full rounded-xl border border-border bg-white/5 pl-10 pr-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
-            />
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-2" />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search foods, e.g. Chicken Breast"
+                autoFocus
+                className="min-h-12 w-full rounded-xl border border-border bg-white/5 pl-10 pr-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setScannerOpen(true)}
+              aria-label="Scan barcode"
+              className="grid h-12 w-12 shrink-0 cursor-pointer place-items-center rounded-xl border border-border bg-white/5 text-foreground hover:bg-white/10"
+            >
+              <Barcode className="h-5 w-5" />
+            </button>
           </div>
 
           <ul className="flex max-h-[50vh] flex-col gap-1.5 overflow-y-auto">
@@ -206,6 +218,18 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
             )}
           </button>
         </div>
+      )}
+
+      {scannerOpen && (
+        <BarcodeScannerModal
+          dateKey={dateKey}
+          defaultSlot={slot}
+          onClose={() => setScannerOpen(false)}
+          onAdded={(name) => {
+            setScannerOpen(false)
+            onAdded?.(name)
+          }}
+        />
       )}
     </BottomSheet>
   )
