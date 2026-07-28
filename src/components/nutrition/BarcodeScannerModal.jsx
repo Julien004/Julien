@@ -6,8 +6,23 @@ import { scaleFoodMacros } from '../../lib/foodDatabase'
 import { MEAL_SLOTS, MEAL_SLOT_LABELS } from '../../lib/seedData'
 import { useTracker } from '../../lib/store'
 
-const BARCODE_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128']
-const isScanSupported = () => typeof window !== 'undefined' && 'BarcodeDetector' in window
+// Loaded on demand (not at app startup) so the ~350KB decoding engine only
+// downloads for someone who actually opens the scanner.
+async function loadScanner() {
+  const [{ BrowserMultiFormatReader }, { BarcodeFormat, DecodeHintType }] = await Promise.all([
+    import('@zxing/browser'),
+    import('@zxing/library'),
+  ])
+  const formats = [
+    BarcodeFormat.EAN_13,
+    BarcodeFormat.EAN_8,
+    BarcodeFormat.UPC_A,
+    BarcodeFormat.UPC_E,
+    BarcodeFormat.CODE_128,
+  ]
+  const hints = new Map([[DecodeHintType.POSSIBLE_FORMATS, formats]])
+  return new BrowserMultiFormatReader(hints)
+}
 
 const MACRO_FIELDS = [
   { key: 'calories', label: 'Calories (kcal)' },
@@ -23,7 +38,7 @@ const emptyMacros = { calories: '', protein: '', carbs: '', fat: '', fiber: '', 
 
 export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'breakfast', onAdded }) {
   const { findFoodByBarcode, addCustomFood, logFood } = useTracker()
-  const [phase, setPhase] = useState(() => (isScanSupported() ? 'scanning' : 'manual'))
+  const [phase, setPhase] = useState('scanning')
   const [cameraMessage, setCameraMessage] = useState(null)
   const [manualCode, setManualCode] = useState('')
   const [notice, setNotice] = useState(null)
@@ -51,39 +66,25 @@ export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'b
 
   useEffect(() => {
     if (phase !== 'scanning') return undefined
-    let stream = null
-    let rafId = null
     let cancelled = false
+    let controls = null
+    let alreadyDetected = false
 
     async function start() {
       try {
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-        })
-        if (cancelled) {
-          stream.getTracks().forEach((t) => t.stop())
-          return
-        }
-        const video = videoRef.current
-        if (!video) return
-        video.srcObject = stream
-        await video.play()
-        const detector = new window.BarcodeDetector({ formats: BARCODE_FORMATS })
-
-        const tick = async () => {
-          if (cancelled) return
-          try {
-            const codes = await detector.detect(video)
-            if (codes.length > 0) {
-              handleDetected(codes[0].rawValue)
-              return
+        const reader = await loadScanner()
+        if (cancelled) return
+        controls = await reader.decodeFromConstraints(
+          { video: { facingMode: { ideal: 'environment' } } },
+          videoRef.current,
+          (result) => {
+            if (result && !alreadyDetected && !cancelled) {
+              alreadyDetected = true
+              controls?.stop()
+              handleDetected(result.getText())
             }
-          } catch {
-            // transient decode error, keep scanning
           }
-          rafId = requestAnimationFrame(tick)
-        }
-        rafId = requestAnimationFrame(tick)
+        )
       } catch (err) {
         if (cancelled) return
         setCameraMessage(
@@ -98,8 +99,7 @@ export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'b
     start()
     return () => {
       cancelled = true
-      if (rafId) cancelAnimationFrame(rafId)
-      if (stream) stream.getTracks().forEach((t) => t.stop())
+      controls?.stop()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
@@ -242,12 +242,6 @@ export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'b
               {cameraMessage}
             </div>
           )}
-          {!isScanSupported() && !cameraMessage && (
-            <div className="flex items-start gap-2 rounded-xl bg-white/10 p-3 text-sm text-white/80">
-              <Camera className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
-              Camera barcode scanning isn't supported in this browser. Enter the barcode number instead.
-            </div>
-          )}
           <form onSubmit={handleManualSubmit} className="flex flex-col gap-3">
             <label>
               <span className="mb-1.5 block text-xs text-white/60">Barcode number</span>
@@ -267,18 +261,16 @@ export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'b
             >
               Look up
             </button>
-            {isScanSupported() && (
-              <button
-                type="button"
-                onClick={() => {
-                  setCameraMessage(null)
-                  setPhase('scanning')
-                }}
-                className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-medium text-white/80 hover:bg-white/5"
-              >
-                <Camera className="h-4 w-4" /> Try camera again
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => {
+                setCameraMessage(null)
+                setPhase('scanning')
+              }}
+              className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-white/15 text-sm font-medium text-white/80 hover:bg-white/5"
+            >
+              <Camera className="h-4 w-4" /> Try camera again
+            </button>
           </form>
         </div>
       )}
