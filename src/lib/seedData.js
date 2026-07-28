@@ -7,6 +7,14 @@ export const MEAL_SLOT_LABELS = {
   snacks: 'Snacks',
 }
 
+export function getCurrentMealSlot(date = new Date()) {
+  const hour = date.getHours()
+  if (hour < 11) return 'breakfast'
+  if (hour < 15) return 'lunch'
+  if (hour < 18) return 'snacks'
+  return 'dinner'
+}
+
 export const MEAL_PLANS = [
   {
     id: 'lean-green',

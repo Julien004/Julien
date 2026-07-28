@@ -2,6 +2,7 @@ import { createContext, useContext, useMemo } from 'react'
 import { useLocalStorageState, dateKey } from './storage'
 import { parseDateKey } from './dateUtils'
 import { WORKOUT_SESSION_POINTS, MEAL_SLOT_POINTS } from './goals'
+import { FOOD_DATABASE, scaleFoodMacros } from './foodDatabase'
 
 const TrackerContext = createContext(null)
 
@@ -10,6 +11,7 @@ const emptyDayWorkout = () => ({ steps: 0, sessions: [] })
 
 let idCounter = 0
 const nextId = () => `id-${Date.now()}-${idCounter++}`
+const round1 = (n) => Math.round(n * 10) / 10
 
 export function TrackerProvider({ children }) {
   const [meals, setMeals] = useLocalStorageState('pt-tracker:meals', {})
@@ -22,6 +24,11 @@ export function TrackerProvider({ children }) {
   const [reflections, setReflections] = useLocalStorageState('pt-tracker:reflections', {})
   const [water, setWater] = useLocalStorageState('pt-tracker:water', {})
   const [sleep, setSleep] = useLocalStorageState('pt-tracker:sleep', {})
+  const [weight, setWeight] = useLocalStorageState('pt-tracker:weight', {})
+  const [customFoods, setCustomFoods] = useLocalStorageState('pt-tracker:customFoods', [])
+  const [recipes, setRecipes] = useLocalStorageState('pt-tracker:recipes', [])
+  const [favoriteFoodIds, setFavoriteFoodIds] = useLocalStorageState('pt-tracker:favoriteFoodIds', [])
+  const [recentFoodLog, setRecentFoodLog] = useLocalStorageState('pt-tracker:recentFoodLog', [])
 
   const api = useMemo(() => {
     const getMealsForDate = (key) => meals[key] ?? emptyDayMeals()
@@ -45,6 +52,30 @@ export function TrackerProvider({ children }) {
         .sort((a, b) => (a.startTime || '99:99').localeCompare(b.startTime || '99:99'))
     }
 
+    const getAllFoods = () => [...FOOD_DATABASE, ...customFoods]
+    const getFood = (id) => getAllFoods().find((f) => f.id === id)
+    const getRecipe = (id) => recipes.find((r) => r.id === id)
+
+    const computeRecipeMacros = (recipe) => {
+      const foods = getAllFoods()
+      const totals = { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0, sugar: 0, sodium: 0 }
+      for (const line of recipe.items) {
+        const food = foods.find((f) => f.id === line.foodId)
+        if (!food) continue
+        const scaled = scaleFoodMacros(food.per100, line.grams)
+        for (const k of Object.keys(totals)) totals[k] += scaled[k]
+      }
+      return {
+        calories: Math.round(totals.calories),
+        protein: Math.round(totals.protein * 10) / 10,
+        carbs: Math.round(totals.carbs * 10) / 10,
+        fat: Math.round(totals.fat * 10) / 10,
+        fiber: Math.round(totals.fiber * 10) / 10,
+        sugar: Math.round(totals.sugar * 10) / 10,
+        sodium: Math.round(totals.sodium),
+      }
+    }
+
     return {
       meals,
       workouts,
@@ -52,9 +83,18 @@ export function TrackerProvider({ children }) {
       reflections,
       water,
       sleep,
+      weight,
+      customFoods,
+      recipes,
+      favoriteFoodIds,
+      recentFoodLog,
       getMealsForDate,
       getWorkoutForDate,
       getActivitiesForDate,
+      getAllFoods,
+      getFood,
+      getRecipe,
+      computeRecipeMacros,
 
       addFoodItem(key, slot, item) {
         setMeals((prev) => {
@@ -83,6 +123,101 @@ export function TrackerProvider({ children }) {
             withIds[slot] = plan.meals[slot].map((it) => ({ id: nextId(), ...it }))
           }
           return { ...prev, [key]: { ...emptyDayMeals(), ...withIds } }
+        })
+      },
+
+      logFood(key, slot, food, grams) {
+        const macros = scaleFoodMacros(food.per100, grams)
+        setMeals((prev) => {
+          const day = prev[key] ?? emptyDayMeals()
+          const item = { id: nextId(), name: food.name, foodId: food.id, grams, ...macros }
+          return { ...prev, [key]: { ...day, [slot]: [...day[slot], item] } }
+        })
+        setRecentFoodLog((prev) => {
+          const withoutFood = prev.filter((r) => r.foodId !== food.id)
+          return [{ foodId: food.id, grams, loggedAt: Date.now() }, ...withoutFood].slice(0, 20)
+        })
+      },
+
+      logRecipe(key, slot, recipe) {
+        const macros = computeRecipeMacros(recipe)
+        setMeals((prev) => {
+          const day = prev[key] ?? emptyDayMeals()
+          const item = { id: nextId(), name: recipe.name, recipeId: recipe.id, ...macros }
+          return { ...prev, [key]: { ...day, [slot]: [...day[slot], item] } }
+        })
+      },
+
+      addCustomFood(data) {
+        const id = nextId()
+        const grams = Number(data.servingSize) || 100
+        const scale = 100 / grams
+        setCustomFoods((prev) => [
+          ...prev,
+          {
+            id,
+            name: data.name,
+            group: 'Custom',
+            defaultGrams: grams,
+            commonServings: [{ label: `1 serving (${grams}g)`, grams }],
+            custom: true,
+            per100: {
+              calories: Math.round((Number(data.calories) || 0) * scale),
+              protein: round1((Number(data.protein) || 0) * scale),
+              carbs: round1((Number(data.carbs) || 0) * scale),
+              fat: round1((Number(data.fat) || 0) * scale),
+              fiber: round1((Number(data.fiber) || 0) * scale),
+              sugar: round1((Number(data.sugar) || 0) * scale),
+              sodium: Math.round((Number(data.sodium) || 0) * scale),
+            },
+          },
+        ])
+        return id
+      },
+
+      removeCustomFood(id) {
+        setCustomFoods((prev) => prev.filter((f) => f.id !== id))
+        setFavoriteFoodIds((prev) => prev.filter((f) => f !== id))
+      },
+
+      addRecipe(data) {
+        const id = nextId()
+        setRecipes((prev) => [
+          ...prev,
+          {
+            id,
+            name: data.name,
+            icon: data.icon || 'UtensilsCrossed',
+            color: data.color || '#22c55e',
+            items: data.items || [],
+            createdAt: Date.now(),
+          },
+        ])
+        return id
+      },
+
+      updateRecipe(id, patch) {
+        setRecipes((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+      },
+
+      removeRecipe(id) {
+        setRecipes((prev) => prev.filter((r) => r.id !== id))
+      },
+
+      toggleFavoriteFood(foodId) {
+        setFavoriteFoodIds((prev) =>
+          prev.includes(foodId) ? prev.filter((f) => f !== foodId) : [...prev, foodId]
+        )
+      },
+
+      addWeightEntry(key, kg) {
+        setWeight((prev) => ({ ...prev, [key]: Number(kg) }))
+      },
+
+      removeWeightEntry(key) {
+        setWeight((prev) => {
+          const { [key]: _removed, ...rest } = prev
+          return rest
         })
       },
 
@@ -233,6 +368,10 @@ export function TrackerProvider({ children }) {
       setSleepHours(key, hours) {
         setSleep((prev) => ({ ...prev, [key]: hours }))
       },
+
+      getWeightForDate(key) {
+        return weight[key] ?? null
+      },
     }
   }, [
     meals,
@@ -242,6 +381,11 @@ export function TrackerProvider({ children }) {
     reflections,
     water,
     sleep,
+    weight,
+    customFoods,
+    recipes,
+    favoriteFoodIds,
+    recentFoodLog,
     setMeals,
     setWorkouts,
     setActivities,
@@ -249,6 +393,11 @@ export function TrackerProvider({ children }) {
     setReflections,
     setWater,
     setSleep,
+    setWeight,
+    setCustomFoods,
+    setRecipes,
+    setFavoriteFoodIds,
+    setRecentFoodLog,
   ])
 
   return <TrackerContext.Provider value={api}>{children}</TrackerContext.Provider>
@@ -272,6 +421,45 @@ export function proteinForDay(dayMeals) {
     (sum, items) => sum + items.reduce((s, it) => s + (it.protein || 0), 0),
     0
   )
+}
+
+function macroFieldForDay(dayMeals, field) {
+  return Object.values(dayMeals).reduce(
+    (sum, items) => sum + items.reduce((s, it) => s + (it[field] || 0), 0),
+    0
+  )
+}
+
+export function carbsForDay(dayMeals) {
+  return macroFieldForDay(dayMeals, 'carbs')
+}
+
+export function fatForDay(dayMeals) {
+  return macroFieldForDay(dayMeals, 'fat')
+}
+
+export function fiberForDay(dayMeals) {
+  return macroFieldForDay(dayMeals, 'fiber')
+}
+
+export function sugarForDay(dayMeals) {
+  return macroFieldForDay(dayMeals, 'sugar')
+}
+
+export function sodiumForDay(dayMeals) {
+  return macroFieldForDay(dayMeals, 'sodium')
+}
+
+export function macrosForDay(dayMeals) {
+  return {
+    calories: caloriesForDay(dayMeals),
+    protein: proteinForDay(dayMeals),
+    carbs: carbsForDay(dayMeals),
+    fat: fatForDay(dayMeals),
+    fiber: fiberForDay(dayMeals),
+    sugar: sugarForDay(dayMeals),
+    sodium: sodiumForDay(dayMeals),
+  }
 }
 
 export { dateKey, WORKOUT_SESSION_POINTS, MEAL_SLOT_POINTS }
