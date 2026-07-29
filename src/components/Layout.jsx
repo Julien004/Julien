@@ -9,7 +9,7 @@ const NAV_ITEMS = [
   { to: '/schedule', label: 'My Schedule', icon: CalendarClock },
   { to: '/nutrition', label: 'Nutrition', icon: UtensilsCrossed },
   { to: '/meal-plans', label: 'Meal Plans', icon: ClipboardList },
-  { to: '/workouts', label: 'Workouts', icon: Dumbbell },
+  { to: '/workouts', label: 'Activity Hub', icon: Dumbbell },
 ]
 
 function NavItems({ onNavigate }) {

@@ -224,20 +224,48 @@ export function TrackerProvider({ children }) {
         })
       },
 
-      addSession(key, exercise) {
+      addSession(key, sessionData) {
+        const id = nextId()
         setWorkouts((prev) => {
           const day = prev[key] ?? emptyDayWorkout()
           const session = {
-            id: nextId(),
-            exerciseId: exercise.id,
-            name: exercise.name,
-            category: exercise.category,
             completed: false,
-            durationMinutes: exercise.defaultDuration ?? 30,
             startTime: '',
             endTime: '',
+            details: {},
+            notes: '',
+            ...sessionData,
+            id,
           }
           return { ...prev, [key]: { ...day, sessions: [...day.sessions, session] } }
+        })
+        return id
+      },
+
+      moveSession(oldKey, newKey, sessionId, patch) {
+        if (oldKey === newKey) {
+          setWorkouts((prev) => {
+            const day = prev[oldKey] ?? emptyDayWorkout()
+            return {
+              ...prev,
+              [oldKey]: {
+                ...day,
+                sessions: day.sessions.map((s) => (s.id === sessionId ? { ...s, ...patch } : s)),
+              },
+            }
+          })
+          return
+        }
+        setWorkouts((prev) => {
+          const oldDay = prev[oldKey] ?? emptyDayWorkout()
+          const session = oldDay.sessions.find((s) => s.id === sessionId)
+          if (!session) return prev
+          const newDay = prev[newKey] ?? emptyDayWorkout()
+          return {
+            ...prev,
+            [oldKey]: { ...oldDay, sessions: oldDay.sessions.filter((s) => s.id !== sessionId) },
+            [newKey]: { ...newDay, sessions: [...newDay.sessions, { ...session, ...patch }] },
+          }
         })
       },
 

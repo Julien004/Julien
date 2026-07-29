@@ -23,6 +23,8 @@ import {
   HeartPulse,
   Brain,
   Star,
+  Bike,
+  Waves,
 } from 'lucide-react'
 
 export const ICONS = {
@@ -50,6 +52,8 @@ export const ICONS = {
   HeartPulse,
   Brain,
   Star,
+  Bike,
+  Waves,
 }
 
 export const ICON_OPTIONS = Object.keys(ICONS)

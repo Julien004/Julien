@@ -6,7 +6,7 @@ const TABS = [
   { to: '/schedule', label: 'Schedule', icon: CalendarClock },
   { to: '/nutrition', label: 'Nutrition', icon: UtensilsCrossed },
   { to: '/meal-plans', label: 'Plans', icon: ClipboardList },
-  { to: '/workouts', label: 'Workouts', icon: Dumbbell },
+  { to: '/workouts', label: 'Activity', icon: Dumbbell },
 ]
 
 export default function BottomNav() {

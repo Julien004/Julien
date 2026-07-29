@@ -91,14 +91,3 @@ export const MEAL_PLANS = [
     },
   },
 ]
-
-export const EXERCISE_LIBRARY = [
-  { id: 'upper-strength', name: 'Upper Body Strength', category: 'Strength', defaultDuration: 50 },
-  { id: 'lower-strength', name: 'Leg Day', category: 'Strength', defaultDuration: 55 },
-  { id: 'full-body', name: 'Full Body Circuit', category: 'Strength', defaultDuration: 45 },
-  { id: 'hiit', name: 'HIIT Cardio', category: 'Cardio', defaultDuration: 25 },
-  { id: 'steady-cardio', name: 'Steady State Run', category: 'Cardio', defaultDuration: 30 },
-  { id: 'mobility', name: 'Mobility & Stretch', category: 'Recovery', defaultDuration: 20 },
-  { id: 'core', name: 'Core & Abs', category: 'Strength', defaultDuration: 20 },
-  { id: 'rest-walk', name: 'Recovery Walk', category: 'Recovery', defaultDuration: 30 },
-]

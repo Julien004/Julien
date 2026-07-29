@@ -1,26 +1,25 @@
 import { useMemo, useState } from 'react'
-import { Footprints, Trash2, Check, Clock } from 'lucide-react'
+import { Footprints, Trash2, Check, Sparkles } from 'lucide-react'
 import GlassCard from '../components/GlassCard'
 import MonthCalendar from '../components/MonthCalendar'
 import Fab from '../components/Fab'
-import BottomSheet from '../components/BottomSheet'
 import Celebration from '../components/Celebration'
+import ActivityTypePicker from '../components/workouts/ActivityTypePicker'
+import LogActivitySheet from '../components/workouts/LogActivitySheet'
+import UpcomingActivities from '../components/workouts/UpcomingActivities'
+import WeeklyDistribution from '../components/workouts/WeeklyDistribution'
+import RecentSessions from '../components/workouts/RecentSessions'
+import { getIcon } from '../lib/icons'
+import { getActivityType } from '../lib/activityTypes'
+import { summarizeSession } from '../lib/sessionSummary'
 import { useTracker, dateKey } from '../lib/store'
-import { EXERCISE_LIBRARY } from '../lib/seedData'
 import { format } from '../lib/dateUtils'
 import { useCelebration } from '../lib/useCelebration'
 
-function minutesBetween(start, end) {
-  if (!start || !end) return null
-  const [sh, sm] = start.split(':').map(Number)
-  const [eh, em] = end.split(':').map(Number)
-  let diff = eh * 60 + em - (sh * 60 + sm)
-  if (diff < 0) diff += 24 * 60
-  return diff
-}
-
-function SessionRow({ session, onToggle, onUpdate, onRemove }) {
-  const computedDuration = minutesBetween(session.startTime, session.endTime)
+function DaySessionRow({ session, onToggle, onEdit, onRemove }) {
+  const type = getActivityType(session.activityType)
+  const Icon = getIcon(type.icon)
+  const summary = summarizeSession(session)
 
   return (
     <div
@@ -29,7 +28,7 @@ function SessionRow({ session, onToggle, onUpdate, onRemove }) {
       }`}
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <button
             type="button"
             onClick={onToggle}
@@ -43,115 +42,42 @@ function SessionRow({ session, onToggle, onUpdate, onRemove }) {
           >
             <Check className="h-4 w-4" strokeWidth={3} />
           </button>
-          <div className="pt-1.5">
-            <p className="font-display text-sm font-semibold text-foreground">{session.name}</p>
-            <p className="text-xs text-muted">{session.category}</p>
-          </div>
+          <button type="button" onClick={onEdit} className="min-w-0 cursor-pointer text-left">
+            <span className="flex items-center gap-1.5">
+              <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: type.color }} />
+              <span className="truncate font-display text-sm font-semibold text-foreground">{session.name}</span>
+            </span>
+            <p className="mt-0.5 truncate text-xs text-muted">
+              {summary}
+              {session.startTime ? ` · ${session.startTime}` : ''}
+            </p>
+          </button>
         </div>
         <button
           type="button"
-          onClick={() => onRemove(session.id)}
+          onClick={onRemove}
           className="grid h-9 w-9 shrink-0 cursor-pointer place-items-center text-muted-2 transition-colors hover:text-destructive"
           aria-label={`Remove ${session.name}`}
         >
           <Trash2 className="h-4 w-4" />
         </button>
       </div>
-
-      <div className="mt-3 flex flex-wrap items-center gap-3 pl-12">
-        <label className="flex items-center gap-1.5 text-xs text-muted">
-          <Clock className="h-3.5 w-3.5" />
-          Start
-          <input
-            type="time"
-            value={session.startTime}
-            onChange={(e) => onUpdate(session.id, { startTime: e.target.value })}
-            className="min-h-9 cursor-pointer rounded-md border border-border bg-white/5 px-2 text-xs text-foreground focus:border-primary/60 focus:outline-none"
-          />
-        </label>
-        <label className="flex items-center gap-1.5 text-xs text-muted">
-          End
-          <input
-            type="time"
-            value={session.endTime}
-            onChange={(e) => onUpdate(session.id, { endTime: e.target.value })}
-            className="min-h-9 cursor-pointer rounded-md border border-border bg-white/5 px-2 text-xs text-foreground focus:border-primary/60 focus:outline-none"
-          />
-        </label>
-        <span className="text-xs text-muted-2">
-          {computedDuration != null ? `${computedDuration} min` : `~${session.durationMinutes} min planned`}
-        </span>
-      </div>
     </div>
-  )
-}
-
-function AddSessionSheet({ open, onClose, onAdd, selectedDateLabel }) {
-  const [exerciseId, setExerciseId] = useState(EXERCISE_LIBRARY[0].id)
-  const [justAdded, setJustAdded] = useState(false)
-
-  const submit = (e) => {
-    e.preventDefault()
-    const exercise = EXERCISE_LIBRARY.find((ex) => ex.id === exerciseId)
-    if (!exercise) return
-    onAdd(exercise)
-    setJustAdded(true)
-    setTimeout(() => setJustAdded(false), 1200)
-  }
-
-  return (
-    <BottomSheet open={open} onClose={onClose} title={`Add session · ${selectedDateLabel}`}>
-      <form onSubmit={submit} className="flex flex-col gap-3 pb-2">
-        <div className="flex flex-col gap-2">
-          {EXERCISE_LIBRARY.map((ex) => (
-            <button
-              key={ex.id}
-              type="button"
-              onClick={() => setExerciseId(ex.id)}
-              className={`flex min-h-12 items-center justify-between rounded-xl border px-4 text-left text-sm transition-colors ${
-                exerciseId === ex.id
-                  ? 'border-primary bg-primary/15 text-foreground'
-                  : 'border-border bg-white/5 text-muted hover:bg-white/10'
-              }`}
-            >
-              <span className="font-medium">{ex.name}</span>
-              <span className="text-xs text-muted-2">{ex.category}</span>
-            </button>
-          ))}
-        </div>
-        <button
-          type="submit"
-          className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl text-base font-medium text-white transition-colors ${
-            justAdded ? 'bg-accent' : 'bg-primary hover:opacity-90'
-          }`}
-        >
-          {justAdded ? (
-            <>
-              <Check className="h-4 w-4" /> Added
-            </>
-          ) : (
-            'Add session'
-          )}
-        </button>
-      </form>
-    </BottomSheet>
   )
 }
 
 export default function Workouts() {
   const [selectedDate, setSelectedDate] = useState(new Date())
-  const { getWorkoutForDate, workouts, addSession, removeSession, toggleSessionComplete, updateSession, setSteps } =
+  const { workouts, getWorkoutForDate, addSession, removeSession, toggleSessionComplete, moveSession, setSteps } =
     useTracker()
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [editingSession, setEditingSession] = useState(null)
+  const [quickType, setQuickType] = useState(null)
   const { message, celebrate } = useCelebration()
+  const now = useMemo(() => new Date(), [])
 
   const key = dateKey(selectedDate)
   const dayWorkout = getWorkoutForDate(key)
-
-  const handleToggleSession = (session) => {
-    toggleSessionComplete(key, session.id)
-    if (!session.completed) celebrate('Workout complete — nice work.')
-  }
 
   const markedDates = useMemo(() => {
     const set = new Set()
@@ -161,12 +87,65 @@ export default function Workouts() {
     return set
   }, [workouts])
 
+  const closeSheet = () => {
+    setSheetOpen(false)
+    setEditingSession(null)
+    setQuickType(null)
+  }
+
+  const handleSave = (data) => {
+    if (editingSession) {
+      moveSession(editingSession.dateKey, data.date, editingSession.session.id, data)
+    } else {
+      addSession(data.date, data)
+    }
+    closeSheet()
+  }
+
+  const handleDelete = () => {
+    if (!editingSession) return
+    removeSession(editingSession.dateKey, editingSession.session.id)
+    closeSheet()
+  }
+
+  const openEdit = (session, sKey) => {
+    setQuickType(null)
+    setEditingSession({ session, dateKey: sKey })
+    setSheetOpen(true)
+  }
+
+  const openQuickLog = (typeId) => {
+    setEditingSession(null)
+    setQuickType(typeId)
+    setSheetOpen(true)
+  }
+
+  const openFabLog = () => {
+    setEditingSession(null)
+    setQuickType(null)
+    setSheetOpen(true)
+  }
+
+  const handleToggleSession = (session, sKey) => {
+    toggleSessionComplete(sKey, session.id)
+    if (!session.completed) celebrate(`${session.name} complete — nice work.`)
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="font-display text-2xl font-bold sm:text-3xl">Workouts</h1>
-        <p className="mt-1 text-sm text-muted">Log sessions, steps, and time spent training</p>
+        <h1 className="font-display text-2xl font-bold sm:text-3xl">Activity Hub</h1>
+        <p className="mt-1 text-sm text-muted">Move your way — every activity counts</p>
       </div>
+
+      <GlassCard className="p-5">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <Sparkles className="h-4 w-4 text-primary" /> Choose an activity
+        </div>
+        <div className="mt-3">
+          <ActivityTypePicker onSelect={openQuickLog} />
+        </div>
+      </GlassCard>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
         <div className="flex flex-col gap-4">
@@ -190,34 +169,42 @@ export default function Workouts() {
           </GlassCard>
         </div>
 
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3">
+          <h2 className="font-display text-sm font-semibold text-foreground">Sessions on {format(selectedDate, 'MMM d')}</h2>
           {dayWorkout.sessions.length > 0 ? (
             <div className="flex flex-col gap-3">
               {dayWorkout.sessions.map((session) => (
-                <SessionRow
+                <DaySessionRow
                   key={session.id}
                   session={session}
-                  onToggle={() => handleToggleSession(session)}
-                  onUpdate={(id, patch) => updateSession(key, id, patch)}
-                  onRemove={(id) => removeSession(key, id)}
+                  onToggle={() => handleToggleSession(session, key)}
+                  onEdit={() => openEdit(session, key)}
+                  onRemove={() => removeSession(key, session.id)}
                 />
               ))}
             </div>
           ) : (
             <GlassCard className="p-8 text-center">
-              <p className="text-sm text-muted">No sessions logged for {format(selectedDate, 'MMMM d')} yet.</p>
-              <p className="mt-1 text-xs text-muted-2">Tap the + button to add your first session.</p>
+              <p className="text-sm text-muted">Nothing logged for {format(selectedDate, 'MMMM d')} yet.</p>
+              <p className="mt-1 text-xs text-muted-2">Choose an activity above, or tap + to log or plan one.</p>
             </GlassCard>
           )}
         </div>
       </div>
 
-      <Fab onClick={() => setSheetOpen(true)} label="Add session" />
-      <AddSessionSheet
+      <UpcomingActivities workouts={workouts} now={now} onSelect={openEdit} />
+      <WeeklyDistribution workouts={workouts} now={now} />
+      <RecentSessions workouts={workouts} now={now} onSelect={openEdit} />
+
+      <Fab onClick={openFabLog} label="Log activity" />
+      <LogActivitySheet
         open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        onAdd={(exercise) => addSession(key, exercise)}
-        selectedDateLabel={format(selectedDate, 'MMM d')}
+        onClose={closeSheet}
+        onSave={handleSave}
+        onDelete={editingSession ? handleDelete : undefined}
+        initial={editingSession ? { ...editingSession.session, date: editingSession.dateKey } : null}
+        defaultDate={key}
+        startType={quickType}
       />
       <Celebration message={message} />
     </div>

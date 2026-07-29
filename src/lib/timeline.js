@@ -2,6 +2,8 @@ import { MEAL_SLOTS, MEAL_SLOT_LABELS } from './seedData'
 import { MEAL_DEFAULT_TIMES, WORKOUT_SESSION_POINTS, MEAL_SLOT_POINTS } from './goals'
 import { CATEGORIES } from './categories'
 import { getCategoryBalance } from './activityCategories'
+import { getActivityType } from './activityTypes'
+import { summarizeSession } from './sessionSummary'
 
 export function toMinutes(hhmm) {
   if (!hhmm) return null
@@ -40,19 +42,20 @@ export function buildTimelineForDate({ activities = [], workout, meals }) {
   }
 
   for (const session of workout.sessions) {
+    const type = getActivityType(session.activityType)
     items.push({
       id: `workout-${session.id}`,
       sourceType: 'workout',
       sourceId: session.id,
       name: session.name,
-      icon: 'Dumbbell',
-      color: '#8b5cf6',
+      icon: type.icon,
+      color: type.color,
       category: 'health',
       time: session.startTime || null,
       endTime: session.endTime || null,
       completed: session.completed,
       points: WORKOUT_SESSION_POINTS,
-      notes: session.category || '',
+      notes: summarizeSession(session),
     })
   }
 

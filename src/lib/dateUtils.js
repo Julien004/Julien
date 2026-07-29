@@ -32,4 +32,15 @@ export function parseDateKey(key) {
   return new Date(y, m - 1, d)
 }
 
+export function formatRelativeDay(date, now = new Date()) {
+  if (isSameDay(date, now)) return 'Today'
+  const tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1)
+  if (isSameDay(date, tomorrow)) return 'Tomorrow'
+  const yesterday = new Date(now)
+  yesterday.setDate(yesterday.getDate() - 1)
+  if (isSameDay(date, yesterday)) return 'Yesterday'
+  return format(date, 'EEE, MMM d')
+}
+
 export { isSameDay, isToday, format, addMonths, subMonths }
