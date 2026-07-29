@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Footprints, Trash2, Check, Sparkles } from 'lucide-react'
 import GlassCard from '../components/GlassCard'
-import MonthCalendar from '../components/MonthCalendar'
 import Fab from '../components/Fab'
 import Celebration from '../components/Celebration'
 import ActivityTypePicker from '../components/workouts/ActivityTypePicker'
@@ -9,6 +8,7 @@ import LogActivitySheet from '../components/workouts/LogActivitySheet'
 import UpcomingActivities from '../components/workouts/UpcomingActivities'
 import WeeklyDistribution from '../components/workouts/WeeklyDistribution'
 import RecentSessions from '../components/workouts/RecentSessions'
+import WeekStrip from '../components/workouts/WeekStrip'
 import { getIcon } from '../lib/icons'
 import { getActivityType } from '../lib/activityTypes'
 import { summarizeSession } from '../lib/sessionSummary'
@@ -150,7 +150,7 @@ export default function Workouts() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
         <div className="flex flex-col gap-4">
           <GlassCard className="p-5">
-            <MonthCalendar selectedDate={selectedDate} onSelect={setSelectedDate} markedDates={markedDates} />
+            <WeekStrip selectedDate={selectedDate} onSelect={setSelectedDate} markedDates={markedDates} />
           </GlassCard>
 
           <GlassCard className="p-5">
