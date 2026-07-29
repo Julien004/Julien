@@ -12,7 +12,6 @@ export const MAIN_MEAL_SLOTS = ['breakfast', 'lunch', 'dinner']
 export const WATER_GOAL_ML = 2500
 export const WATER_CUP_ML = 250
 export const SLEEP_GOAL_HOURS = 8
-export const WEIGHT_UNIT = 'kg'
 
 export const MEAL_DEFAULT_TIMES = {
   breakfast: '07:30',

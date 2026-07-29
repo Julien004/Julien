@@ -24,7 +24,6 @@ export function TrackerProvider({ children }) {
   const [reflections, setReflections] = useLocalStorageState('pt-tracker:reflections', {})
   const [water, setWater] = useLocalStorageState('pt-tracker:water', {})
   const [sleep, setSleep] = useLocalStorageState('pt-tracker:sleep', {})
-  const [weight, setWeight] = useLocalStorageState('pt-tracker:weight', {})
   const [customFoods, setCustomFoods] = useLocalStorageState('pt-tracker:customFoods', [])
   const [recipes, setRecipes] = useLocalStorageState('pt-tracker:recipes', [])
   const [favoriteFoodIds, setFavoriteFoodIds] = useLocalStorageState('pt-tracker:favoriteFoodIds', [])
@@ -83,7 +82,6 @@ export function TrackerProvider({ children }) {
       reflections,
       water,
       sleep,
-      weight,
       customFoods,
       recipes,
       favoriteFoodIds,
@@ -211,17 +209,6 @@ export function TrackerProvider({ children }) {
         setFavoriteFoodIds((prev) =>
           prev.includes(foodId) ? prev.filter((f) => f !== foodId) : [...prev, foodId]
         )
-      },
-
-      addWeightEntry(key, kg) {
-        setWeight((prev) => ({ ...prev, [key]: Number(kg) }))
-      },
-
-      removeWeightEntry(key) {
-        setWeight((prev) => {
-          const { [key]: _removed, ...rest } = prev
-          return rest
-        })
       },
 
       addSession(key, sessionData) {
@@ -399,10 +386,6 @@ export function TrackerProvider({ children }) {
       setSleepHours(key, hours) {
         setSleep((prev) => ({ ...prev, [key]: hours }))
       },
-
-      getWeightForDate(key) {
-        return weight[key] ?? null
-      },
     }
   }, [
     meals,
@@ -412,7 +395,6 @@ export function TrackerProvider({ children }) {
     reflections,
     water,
     sleep,
-    weight,
     customFoods,
     recipes,
     favoriteFoodIds,
@@ -424,7 +406,6 @@ export function TrackerProvider({ children }) {
     setReflections,
     setWater,
     setSleep,
-    setWeight,
     setCustomFoods,
     setRecipes,
     setFavoriteFoodIds,

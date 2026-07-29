@@ -22,17 +22,15 @@ const METRICS = {
   carbs: { label: 'Carbs', unit: 'g', goal: CARBS_GOAL, color: '#f59e0b' },
   fat: { label: 'Fat', unit: 'g', goal: FAT_GOAL, color: '#ec4899' },
   water: { label: 'Water', unit: 'ml', goal: WATER_GOAL_ML, color: '#06b6d4' },
-  weight: { label: 'Weight', unit: 'kg', goal: null, color: '#3b82f6' },
 }
 const GRANULARITIES = ['Days', 'Weeks', 'Months']
 
-function getMetricValue(metric, key, meals, water, weight) {
+function getMetricValue(metric, key, meals, water) {
   if (metric === 'water') return water[key] || 0
-  if (metric === 'weight') return weight[key] ?? null
   return macrosForDay(meals[key] ?? {})[metric] || 0
 }
 
-function buildDayData(metric, meals, water, weight, weekOffset) {
+function buildDayData(metric, meals, water, weekOffset) {
   const weekStart = startOfWeek(addWeeks(new Date(), weekOffset), { weekStartsOn: 1 })
   return Array.from({ length: 7 }, (_, i) => {
     const d = addDays(weekStart, i)
@@ -42,44 +40,42 @@ function buildDayData(metric, meals, water, weight, weekOffset) {
       label: format(d, 'd'),
       sublabel: format(d, 'EEE'),
       fullLabel: format(d, 'MMM d'),
-      value: getMetricValue(metric, key, meals, water, weight),
+      value: getMetricValue(metric, key, meals, water),
       goal: METRICS[metric].goal,
     }
   })
 }
 
-function buildWeeksData(metric, meals, water, weight, now) {
+function buildWeeksData(metric, meals, water, now) {
   return Array.from({ length: 8 }, (_, i) => {
     const weekStart = startOfWeek(subWeeks(now, 7 - i), { weekStartsOn: 1 })
     const days = eachDayOfInterval({ start: weekStart, end: addDays(weekStart, 6) })
-    const values = days.map((d) => getMetricValue(metric, dateKey(d), meals, water, weight))
-    const present = metric === 'weight' ? values.filter((v) => v != null) : values
-    const avg = present.length ? present.reduce((s, v) => s + v, 0) / present.length : null
+    const values = days.map((d) => getMetricValue(metric, dateKey(d), meals, water))
+    const avg = values.reduce((s, v) => s + v, 0) / values.length
     return {
       key: dateKey(weekStart),
       label: format(weekStart, 'd'),
       sublabel: format(weekStart, 'MMM'),
       fullLabel: `Week of ${format(weekStart, 'MMM d')}`,
-      value: avg != null ? Math.round(avg * 10) / 10 : null,
+      value: Math.round(avg * 10) / 10,
       goal: METRICS[metric].goal,
     }
   })
 }
 
-function buildMonthsData(metric, meals, water, weight, now) {
+function buildMonthsData(metric, meals, water, now) {
   return Array.from({ length: 6 }, (_, i) => {
     const monthStart = startOfMonth(subMonths(now, 5 - i))
     const monthEnd = endOfMonth(monthStart)
     const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
-    const values = days.map((d) => getMetricValue(metric, dateKey(d), meals, water, weight))
-    const present = metric === 'weight' ? values.filter((v) => v != null) : values
-    const avg = present.length ? present.reduce((s, v) => s + v, 0) / present.length : null
+    const values = days.map((d) => getMetricValue(metric, dateKey(d), meals, water))
+    const avg = values.reduce((s, v) => s + v, 0) / values.length
     return {
       key: dateKey(monthStart),
       label: format(monthStart, 'MMM'),
       sublabel: format(monthStart, 'yyyy'),
       fullLabel: format(monthStart, 'MMMM yyyy'),
-      value: avg != null ? Math.round(avg * 10) / 10 : null,
+      value: Math.round(avg * 10) / 10,
       goal: METRICS[metric].goal,
     }
   })
@@ -88,7 +84,7 @@ function buildMonthsData(metric, meals, water, weight, now) {
 const MACRO_COLORS = { protein: '#22c55e', carbs: '#f59e0b', fat: '#ec4899' }
 
 export default function NutritionAnalytics({ dateKey: focusedDateKey }) {
-  const { meals, water, weight } = useTracker()
+  const { meals, water } = useTracker()
   const [metric, setMetric] = useState('calories')
   const [granularity, setGranularity] = useState('Days')
   const [weekOffset, setWeekOffset] = useState(0)
@@ -96,10 +92,10 @@ export default function NutritionAnalytics({ dateKey: focusedDateKey }) {
   const now = useMemo(() => new Date(), [])
 
   const data = useMemo(() => {
-    if (granularity === 'Weeks') return buildWeeksData(metric, meals, water, weight, now)
-    if (granularity === 'Months') return buildMonthsData(metric, meals, water, weight, now)
-    return buildDayData(metric, meals, water, weight, weekOffset)
-  }, [metric, granularity, meals, water, weight, now, weekOffset])
+    if (granularity === 'Weeks') return buildWeeksData(metric, meals, water, now)
+    if (granularity === 'Months') return buildMonthsData(metric, meals, water, now)
+    return buildDayData(metric, meals, water, weekOffset)
+  }, [metric, granularity, meals, water, now, weekOffset])
 
   const todayKey = dateKey(now)
   const focused =
