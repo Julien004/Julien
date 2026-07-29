@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, ChevronLeft, Star, Check, Barcode } from 'lucide-react'
 import BottomSheet from '../BottomSheet'
 import BarcodeScannerModal from './BarcodeScannerModal'
@@ -24,12 +24,17 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
   const [grams, setGrams] = useState(100)
   const [justAdded, setJustAdded] = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
+  const searchInputRef = useRef(null)
 
   const results = useMemo(() => searchFoods(query, customFoods), [query, customFoods])
 
   useEffect(() => {
     if (open) setSlot(defaultSlot)
   }, [open, defaultSlot])
+
+  useEffect(() => {
+    if (open && !selected) searchInputRef.current?.focus({ preventScroll: true })
+  }, [open, selected])
 
   const handleClose = () => {
     setQuery('')
@@ -80,10 +85,10 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
             <div className="relative flex-1">
               <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-2" />
               <input
+                ref={searchInputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search foods, e.g. Chicken Breast"
-                autoFocus
                 className="min-h-12 w-full rounded-xl border border-border bg-white/5 pl-10 pr-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
               />
             </div>
@@ -97,7 +102,7 @@ export default function FoodSearchSheet({ open, onClose, dateKey, defaultSlot = 
             </button>
           </div>
 
-          <ul className="flex max-h-[50vh] flex-col gap-1.5 overflow-y-auto">
+          <ul className="flex max-h-[50dvh] flex-col gap-1.5 overflow-y-auto overscroll-contain">
             {results.map((food) => {
               const preview = scaleFoodMacros(food.per100, food.defaultGrams)
               const fav = favoriteFoodIds.includes(food.id)

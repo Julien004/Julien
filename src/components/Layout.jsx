@@ -58,7 +58,7 @@ export default function Layout() {
   }, [mobileOpen])
 
   return (
-    <div className="relative min-h-dvh overflow-x-hidden bg-background text-foreground">
+    <div className="relative min-h-dvh overflow-x-clip bg-background text-foreground">
       <div className="glow-orb -left-40 top-[-10rem] h-96 w-96 bg-primary/25" />
       <div className="glow-orb -right-40 top-1/3 h-[28rem] w-[28rem] bg-secondary/20" />
       <div className="glow-orb bottom-[-12rem] left-1/4 h-96 w-96 bg-primary/10" />

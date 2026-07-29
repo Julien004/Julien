@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BottomSheet from '../BottomSheet'
 import { useTracker } from '../../lib/store'
 
@@ -17,6 +17,11 @@ const emptyForm = { name: '', servingSize: '100', calories: '', protein: '', car
 export default function CustomFoodSheet({ open, onClose }) {
   const { addCustomFood } = useTracker()
   const [form, setForm] = useState(emptyForm)
+  const nameRef = useRef(null)
+
+  useEffect(() => {
+    if (open) nameRef.current?.focus({ preventScroll: true })
+  }, [open])
 
   const setField = (key, value) => setForm((f) => ({ ...f, [key]: value.replace(/[^0-9.]/g, '') }))
 
@@ -36,10 +41,10 @@ export default function CustomFoodSheet({ open, onClose }) {
     <BottomSheet open={open} onClose={handleClose} title="Create custom food">
       <form onSubmit={submit} className="flex flex-col gap-3 pb-2">
         <input
+          ref={nameRef}
           value={form.name}
           onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
           placeholder="Food name"
-          autoFocus
           className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
         />
 

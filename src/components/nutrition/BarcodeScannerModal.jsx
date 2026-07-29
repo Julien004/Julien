@@ -276,7 +276,7 @@ export default function BarcodeScannerModal({ onClose, dateKey, defaultSlot = 'b
       )}
 
       {phase === 'review' && (
-        <form onSubmit={handleAddToDiary} className="flex flex-1 flex-col gap-4 overflow-y-auto bg-surface p-5">
+        <form onSubmit={handleAddToDiary} className="flex flex-1 flex-col gap-4 overflow-y-auto overscroll-contain bg-surface p-5">
           {notice && (
             <div className="flex items-start gap-2 rounded-xl bg-white/5 p-3 text-sm text-muted">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-accent" />

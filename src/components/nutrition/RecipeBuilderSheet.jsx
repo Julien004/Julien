@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Search, Plus, Trash2 } from 'lucide-react'
 import BottomSheet from '../BottomSheet'
 import { searchFoods, scaleFoodMacros } from '../../lib/foodDatabase'
@@ -9,6 +9,11 @@ export default function RecipeBuilderSheet({ open, onClose }) {
   const [name, setName] = useState('')
   const [query, setQuery] = useState('')
   const [items, setItems] = useState([])
+  const nameRef = useRef(null)
+
+  useEffect(() => {
+    if (open) nameRef.current?.focus({ preventScroll: true })
+  }, [open])
 
   const results = useMemo(
     () => (query.trim() ? searchFoods(query, customFoods).slice(0, 6) : []),
@@ -62,10 +67,10 @@ export default function RecipeBuilderSheet({ open, onClose }) {
     <BottomSheet open={open} onClose={handleClose} title="Build a recipe">
       <form onSubmit={submit} className="flex flex-col gap-4 pb-2">
         <input
+          ref={nameRef}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Recipe name, e.g. Chicken Bowl"
-          autoFocus
           className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
         />
 

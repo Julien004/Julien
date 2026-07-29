@@ -54,7 +54,7 @@ export default function DayGrid({
         </div>
       )}
 
-      <div ref={scrollRef} className="max-h-[65vh] overflow-y-auto">
+      <div ref={scrollRef} className="max-h-[65dvh] overflow-y-auto overscroll-contain">
         <div className="relative flex" style={{ height: GRID_HEIGHT }}>
           <div className="w-14 shrink-0">
             {HOURS.map((h) => (

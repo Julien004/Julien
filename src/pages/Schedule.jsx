@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { addDays, subDays } from 'date-fns'
 import { Plus, Check, Bell, ChevronLeft, ChevronRight } from 'lucide-react'
 import GlassCard from '../components/GlassCard'
@@ -51,6 +51,11 @@ function ActivitySheet({ open, onClose, onSave, initial, defaultDate }) {
   const [repeat, setRepeat] = useState(initial?.repeat || 'none')
   const [weeklyDays, setWeeklyDays] = useState(initial?.weeklyDays || [])
   const [reminder, setReminder] = useState(initial?.reminder || false)
+  const nameRef = useRef(null)
+
+  useEffect(() => {
+    if (open) nameRef.current?.focus({ preventScroll: true })
+  }, [open])
 
   useEffect(() => {
     if (!open) return
@@ -137,10 +142,10 @@ function ActivitySheet({ open, onClose, onSave, initial, defaultDate }) {
         )}
 
         <input
+          ref={nameRef}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Activity name"
-          autoFocus
           className="min-h-12 rounded-xl border border-border bg-white/5 px-4 text-base text-foreground placeholder:text-muted-2 focus:border-primary/60 focus:outline-none"
         />
 
